@@ -1,4 +1,3 @@
-# prog1UcTs.py
 from socket import *
 import random
 import string
@@ -11,9 +10,8 @@ TCP_SERVER_PORT = 13000 # Port on THIS computer (P1)
 
 # --- TCP Server Logic ---
 def run_tcp_server():
-    """
-    Listens for the TCP connection from Program 2.
-    """
+    # Listens for the TCP connection from Program 2.
+    
     print("[TCP Server] Starting background service...")
     serverSocket = socket(AF_INET, SOCK_STREAM)
     # Bind to 0.0.0.0 to accept connections from external computers
@@ -61,30 +59,12 @@ def run_tcp_server():
             print(f"[TCP Server] Error: {e}") 
 
 # --- UDP Client Logic ---
-def generate_random_message():
-    """Generates a random 3-letter message."""
-    letters = string.ascii_letters
-    return ''.join(random.choice(letters) for i in range(3))
-
-def get_local_ip():
-    try:
-        # Trick to find the local IP connected to the internet
-        s = socket(AF_INET, SOCK_DGRAM)
-        s.connect(("8.8.8.8", 80))
-        ip = s.getsockname()[0]
-        s.close()
-        return ip
-    except:
-        return "127.0.0.1"
-
 def run_udp_client(server_ip):
-    """
-    Sends random messages to P2 until a valid response is received.
-    """
+    # Sends random messages to P2 until a valid response is received.
     print("\n[UDP Client] Starting...")
     clientSocket = socket(AF_INET, SOCK_DGRAM)
     
-    # INCREASED TIMEOUT to 4 seconds for slow networks/human reflexes
+    # 4 second timeout for slow networks/human reflexes
     clientSocket.settimeout(4.0) 
     
     response_received = False
@@ -94,8 +74,8 @@ def run_udp_client(server_ip):
         print("-" * 50)
         print(f"[UDP Client] Generated message: '{message}'")
         
-        # Check validity locally just for the log (so we know if we expect a reply)
-        # Remember: P2 reverses it, but 'no vowels' applies same forward or backward
+        # Check validity locally just for the log
+        # P2 reverses it, but 'no vowels' applies same forward or backward
         expect_valid = not any(char in 'AEIOUaeiou' for char in message)
         status_str = "Expect Reply" if expect_valid else "Expect Timeout (Invalid)"
         
@@ -113,7 +93,6 @@ def run_udp_client(server_ip):
             response_received = True
             
         except timeout:
-            # If we expected a reply (valid message) but timed out, it's a network error.
             if expect_valid:
                 print("[UDP Client] TIMEOUT on VALID message!")
                 print(">>> POSSIBLE CAUSE: Firewall is blocking Port 13000 on THIS computer.")
@@ -130,6 +109,22 @@ def run_udp_client(server_ip):
     clientSocket.close()
     print("\n[Program 1] Task successfully completed. Shutting down.")
 
+def generate_random_message():
+    # Generates a random 3-letter message.
+    letters = string.ascii_letters
+    return ''.join(random.choice(letters) for i in range(3))
+
+def get_local_ip():
+    try:
+        # Find the local IP connected to the internet
+        s = socket(AF_INET, SOCK_DGRAM)
+        s.connect(("8.8.8.8", 80))
+        ip = s.getsockname()[0]
+        s.close()
+        return ip
+    except:
+        return "127.0.0.1"
+
 # --- Main Execution ---
 if __name__ == '__main__':
     print("=== PROGRAM 1: UDP Client / TCP Server ===")
@@ -138,18 +133,19 @@ if __name__ == '__main__':
     print(f"INFO: This computer's IP address is: {local_ip}")
     print("Ensure Program 2 can reach this IP address.\n")
     
-    # 1. Start the TCP Server thread immediately
+    # Start the TCP Server thread immediately
     tcp_thread = threading.Thread(target=run_tcp_server)
     tcp_thread.daemon = True 
     tcp_thread.start()
     
-    time.sleep(1) # Let TCP server spin up
+    # Give the TCP server a moment to start up
+    time.sleep(1)
     
-    # 2. Ask user for the OTHER computer's IP
+    # Ask user for the OTHER computer's IP
     target_ip = input("Enter IP Address of Program 2 (UDP Server): ").strip()
     
     if not target_ip:
         target_ip = "127.0.0.1"
     
-    # 3. Run the UDP client logic
+    # Run the UDP client logic
     run_udp_client(target_ip)
